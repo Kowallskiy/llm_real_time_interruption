@@ -1,0 +1,57 @@
+{
+    "family": "my-fastapi-app",
+    "requiresCompatibilities": ["FARGATE"],
+    "executionRoleArn": "******",
+    "networkMode": "awsvpc",
+    "containerDefinitions": [
+        {
+            "name": "my-fastapi-app",
+            "image": "*******",
+            "essential": true,
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                    "awslogs-group": "******",
+                    "awslogs-region": "******",
+                    "awslogs-stream-prefix": "ecs"
+                }
+            },
+            "portMappings": [
+                {
+                    "containerPort": 8000,
+                    "hostPort": 8000,
+                    "protocol": "tcp"
+                }
+            ],
+            "environment": [
+                {
+                    "name": "AWS_ACCESS_KEY_ID",
+                    "value": "******"
+                },
+                {
+                    "name": "AWS_SECRET_ACCESS_KEY",
+                    "value": "******"
+                },
+                {
+                    "name": "AWS_REGION",
+                    "value": "******"
+                },
+                {
+                    "name": "LLAMA_ENDPOINT",
+                    "value": "llama2-real-time-interruption"
+                },
+                {
+                    "name": "TOPIC_MODEL_ENDPOINT",
+                    "value": "topic-identifier-endpoint"
+                },
+                {
+                    "name": "SENTIMENT_ANALYSIS_ENDPOINT",
+                    "value": "sentiment-analysis-endpoint"
+                }
+            ],
+            "command": ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+        }
+    ],
+    "cpu": "256",
+    "memory": "512"
+}

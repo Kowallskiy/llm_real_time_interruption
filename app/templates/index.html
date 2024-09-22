@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Real-time Fake Audio Detection</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .console {
+            width: 100%;
+            max-width: 600px;
+            margin: auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .output {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="console">
+        <button id="startButton">Start Detection</button>
+        <button id="stopButton" disabled>Stop Detection</button>
+        <div class="output" id="output"></div>
+    </div>
+
+    <script>
+        const startButton = document.getElementById('startButton');
+        const stopButton = document.getElementById('stopButton');
+        const output = document.getElementById('output');
+        let mediaRecorder;
+        let websocket;
+
+        function logMessage(message) {
+            const log = document.createElement('p');
+            log.textContent = message;
+            output.appendChild(log);
+            output.scrollTop = output.scrollHeight;
+        }
+
+        async function startDetection() {
+            startButton.disabled = true;
+            stopButton.disabled = false;
+            logMessage('Starting detection...');
+
+            websocket = new WebSocket('ws://localhost:8000/ws');
+            websocket.onmessage = function(event) {
+                const data = event.data;
+                logMessage(`Detected ${data} audio`);
+            };
+            websocket.onerror = function(error) {
+                logMessage(`WebSocket error: ${error.message}`);
+            };
+
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream);
+            mediaRecorder.ondataavailable = (event) => {
+                if (event.data.size > 0) {
+                    websocket.send(event.data);
+                }
+            };
+            mediaRecorder.start(2000); // Send audio data every 2 seconds
+        }
+
+        function stopDetection() {
+            startButton.disabled = false;
+            stopButton.disabled = true;
+            logMessage('Stopping detection...');
+
+            mediaRecorder.stop();
+            websocket.close();
+        }
+
+        startButton.addEventListener('click', startDetection);
+        stopButton.addEventListener('click', stopDetection);
+    </script>
+</body>
+</html>
